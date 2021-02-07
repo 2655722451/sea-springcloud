@@ -1,3 +1,11 @@
+
+demo1：
+    aop + 自定义注解 + java反射 实现 controller 所有 实体参数 进行非空验证
+
+------------------------------------------------------------------------------------------------
+
+剩下都是 git 的 Spring Cloud：
+
 <br/>
 
  **项目wiki文档 [https://gitee.com/zhoubang85/sea-springcloud/wikis/pages](https://gitee.com/zhoubang85/sea-springcloud/wikis/pages)** 
