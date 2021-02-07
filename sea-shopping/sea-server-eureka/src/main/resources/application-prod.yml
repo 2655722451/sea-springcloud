@@ -1,0 +1,35 @@
+server:
+  port: 18761
+
+spring:
+  application:
+    name: sea-server-eureka
+  profiles: slave1
+
+eureka:
+  instance:
+    hostname: server.eureka.slave1.com
+  client:
+    service-url:
+      defaultZone: http://localhost:18761:18761/eureka
+    fetch-registry: false
+    register-with-eureka: false
+
+---
+
+server:
+  port: 28761
+
+spring:
+  application:
+    name: sea-server-eureka
+  profiles: slave2
+
+eureka:
+  instance:
+    hostname: server.eureka.slave2.com
+  client:
+    service-url:
+      defaultZone: http://localhost:18761/eureka
+    fetch-registry: false
+    register-with-eureka: false
