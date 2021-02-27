@@ -1,11 +1,9 @@
 package com.example.demo.config;
 
+import com.example.demo.util.ResultMap;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @Classname MyControllerAdvice
@@ -23,12 +21,10 @@ public class MyControllerAdvice {
      */
     @ResponseBody
     @ExceptionHandler(value = Exception.class)
-    public Map errorHandler(Exception ex) {
-        System.out.println("????????????????1");
-        Map map = new HashMap();
-        map.put("code", 100);
-        map.put("msg", ex.getMessage());
-        return map;
+    public ResultMap errorHandler(Exception ex) {
+        System.out.println("全局异常捕捉 Exception" + ex.getMessage());
+
+        return new ResultMap(500, ex.getMessage(), null);
     }
 
     /**
@@ -38,12 +34,10 @@ public class MyControllerAdvice {
      */
     @ResponseBody
     @ExceptionHandler(value = MyException.class)
-    public Map myErrorHandler(MyException ex) {
-        System.out.println("????????????????2");
-        Map map = new HashMap();
-        map.put("code", ex.getCode());
-        map.put("msg", ex.getMsg());
-        return map;
+    public ResultMap myErrorHandler(MyException ex) {
+        System.out.println("全局异常捕捉 MyException" + ex.getMessage());
+
+        return new ResultMap(500, ex.getMessage(), null);
     }
 
 }

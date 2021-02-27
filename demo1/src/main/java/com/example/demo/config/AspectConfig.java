@@ -1,6 +1,7 @@
 package com.example.demo.config;
 
 import com.example.demo.interfaces.CheckIsNull;
+import com.example.demo.util.ResultMap;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -32,22 +33,22 @@ public class AspectConfig {
 
     /**
      * 环绕通知
+     * 验证实体参数 null
      */
     @Around(value = "checkIsNull()")
-    public Object arround(ProceedingJoinPoint pjp){
+    public Object arround(ProceedingJoinPoint pjp) throws Throwable {
         //方法环绕开始.....
+        String message = "";
         try {
-            String message = before(pjp);
-            if("".equals(message)){
-                Object o =  pjp.proceed();
-                //方法环绕结束，结果是 + o
-                return o;
-            }else{
-                return message;
-            }
+            message = before(pjp);
         } catch (Throwable e) {
             System.out.println(pjp.getSignature() + " 出现异常： " + e.getMessage());
-            return "系统异常：" + e.getMessage();
+        } finally {
+            if(!"".equals(message)){
+                return new ResultMap(500, message, null);
+            }else{
+                return pjp.proceed();
+            }
         }
     }
 
@@ -68,22 +69,26 @@ public class AspectConfig {
         Object[] orgs = joinPoint.getArgs();
         //参数集合
         for(int i = 0; i < orgs.length; i++){
-            Class clazz = orgs[i].getClass();
-            Field[] fields = clazz.getDeclaredFields();
-            //遍历所有属性
-            for(int j = 0; j < fields.length; j++){
-                fields[j].setAccessible(true);//可以访问私有属性
-                Object obj = fields[j].get(orgs[i]);//获取属性的值
-                CheckIsNull checkIsNull = fields[j].getAnnotation(CheckIsNull.class);
-                if(checkIsNull != null){
-                    //注解配置，是否可以为空
-                    if(checkIsNull.isnull() == false){
-                        //效验参数实体类，是否为空  不可等于 null 并且不可 等于 0
-                        if(obj == null || "0".equals(obj + "")){
-                            message = checkIsNull.message();
+            if(orgs[i] != null){
+                Class clazz = orgs[i].getClass();
+                Field[] fields = clazz.getDeclaredFields();
+                //遍历所有属性
+                for(int j = 0; j < fields.length; j++){
+                    fields[j].setAccessible(true);//可以访问私有属性
+                    Object obj = fields[j].get(orgs[i]);//获取属性的值
+                    CheckIsNull checkIsNull = fields[j].getAnnotation(CheckIsNull.class);
+                    if(checkIsNull != null){
+                        //注解配置，是否可以为空
+                        if(checkIsNull.isnull() == false){
+                            //效验参数实体类，是否为空  不可等于 null 并且不可 等于 0
+                            if(obj == null || "0".equals(obj + "")){
+                                message = checkIsNull.message();
+                            }
                         }
                     }
                 }
+            }else{
+                message = "系统异常，参数缺失";
             }
         }
 
@@ -95,6 +100,8 @@ public class AspectConfig {
         System.out.println("CLASS_METHOD : " + joinPoint.getSignature().getDeclaringTypeName() + "." + joinPoint.getSignature().getName());
         System.out.println("ARGS : " + Arrays.toString(joinPoint.getArgs()));*/
     }
+
+//---------------------------------------无用代码-------------------------------------------------------------------
 
     /**
      * 方法执行结束，不管是抛出异常或者正常退出都会执行
@@ -121,11 +128,4 @@ public class AspectConfig {
         logger.error("AfterThrowing：方法异常时执行.....");
     }*/
 
-    public static void main(String[] args) {
-        Object obj = null;
-
-        if(obj == null || "0".equals(obj + "")){
-
-        }
-    }
 }

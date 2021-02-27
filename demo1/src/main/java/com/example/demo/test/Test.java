@@ -3,11 +3,17 @@ package com.example.demo.test;
 import com.example.demo.controller.StudentController;
 import com.example.demo.interfaces.CheckIsNull;
 import com.example.demo.vo.StudentVo;
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
+import java.util.*;
 
 /**
  * @Classname Test
@@ -21,6 +27,106 @@ public class Test {
         //new Test().ziduan();
         //new Test().fangfa();
         //new Test().zhujie();
+        new Test().catalog();
+
+
+    }
+
+    /**
+     * 抓目录
+     * @throws IOException
+     */
+    public void catalog() throws IOException {
+        String url = "https://www.luoqiuxzw.com/book/1049/";
+        Connection connect = Jsoup.connect(url);
+
+        Document document = connect.get();
+        Element listElement = document.getElementById("list");
+        Elements aElements = listElement.getElementsByTag("a");
+
+        String str = "";
+        System.err.println("目录：");
+        for(int i = 0; i < aElements.size(); i++){
+            System.err.println(i + "  章节:" + aElements.get(i).html());
+        }
+        System.out.println("输入数字：");
+        Scanner input = new Scanner(System.in);
+        str = input.next();
+
+        int whileI = Integer.valueOf(str);
+        this.readerText(aElements.get(whileI).attr("href"));
+    }
+
+    public void readerText(String url) throws IOException {
+        Test test = new Test();
+        while (true){
+            Elements elements = test.jsoup(url, true);
+
+            if(elements.size() > 0){
+                Elements aelements = elements.get(0).select("a");
+                String str = "";
+                for(int i = 0; i < aelements.size(); i++){
+                    System.out.println(i + "、" + aelements.get(i).html());
+                }
+                System.out.println();
+                System.out.println();
+                System.err.println("先右键手动清空控制台（Clear All），再输入数字");
+                System.out.println("输入数字：");
+                Scanner input = new Scanner(System.in);
+                str = input.next();
+                url = aelements.get(Integer.valueOf(str)).attr("href");
+
+            }else{
+                System.out.println("没了！！！或页面异常 url：" + url);
+            }
+        }
+    }
+
+    public Elements jsoup(String url, boolean bool) throws IOException {
+        //代理
+        Random r = new Random();
+        int n = r.nextInt(255);
+        String ipStr = "10.128.110." + n;
+        System.err.println("代理ip：" + ipStr);
+        System.setProperty("http.maxRedirects", "1");
+        System.getProperties().setProperty("proxySet", "true");
+        System.getProperties().put("https.proxyHost", ipStr);//代理ip
+        System.getProperties().put("https.proxyPort", "3182");//代理端口
+
+        //页面header 中 User-Agent
+        String agent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.3";
+
+        String urlPath = "https://www.luoqiuxzw.com";
+        List<Map<String, String>> list = new ArrayList<>();
+        Connection connect = Jsoup.connect(urlPath + url);
+
+        Document document = connect
+                .userAgent(agent)
+                .ignoreHttpErrors(true)//这个很重要 否则会报HTTP error fetching URL. Status=404
+                .get();
+        Element contentElement = document.getElementById("content");
+
+        System.err.println("html地址：" + urlPath + url);
+        System.err.println("章节名称：" + this.getTitleName(document));
+        System.out.println();
+        System.out.println();
+        System.out.println("小说内容：");
+        Elements pElement = contentElement.getElementsByClass("content_detail");
+        if(bool){
+            pElement.forEach(s -> System.out.println(s.html()));
+        }
+
+        Elements bottem2Elements = document.getElementsByClass("bottem2");
+        return bottem2Elements;
+    }
+
+    public String getTitleName(Document document){
+        Element mainElement = document.getElementById("main");
+        Elements h1Elements = mainElement.getElementsByTag("h1");
+        if(h1Elements.size() > 0){
+            return h1Elements.get(0).html();
+        }
+        return "";
     }
 
     //注解
