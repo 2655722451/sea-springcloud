@@ -28,8 +28,6 @@ public class Test {
         //new Test().fangfa();
         //new Test().zhujie();
         new Test().catalog();
-
-
     }
 
     /**
@@ -37,6 +35,7 @@ public class Test {
      * @throws IOException
      */
     public void catalog() throws IOException {
+        //027 秘密
         String url = "https://www.luoqiuxzw.com/book/1049/";
         Connection connect = Jsoup.connect(url);
 

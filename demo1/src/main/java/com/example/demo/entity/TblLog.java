@@ -17,7 +17,7 @@ public class TblLog {
     private String flogdatetime;
     private String floguserid;
     private String flogusername;
-    private String flogtypeid;
+    private int flogtypeid;
     private String flogtypename;
     private String ftable;
     private String frecordid;
@@ -71,11 +71,11 @@ public class TblLog {
     }
 
     @Column(name="flogtypeid")
-    public String getFlogtypeid() {
+    public int getFlogtypeid() {
         return flogtypeid;
     }
 
-    public void setFlogtypeid(String flogtypeid) {
+    public void setFlogtypeid(int flogtypeid) {
         this.flogtypeid = flogtypeid;
     }
 

@@ -1,5 +1,6 @@
 package com.example.demo.config;
 
+import com.example.demo.entity.TblLog;
 import com.example.demo.interfaces.AddLogs;
 import com.example.demo.repository.TblLogRepository;
 import com.example.demo.vo.LogAspectVo;
@@ -14,11 +15,15 @@ import org.springframework.stereotype.Component;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import javax.persistence.Table;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -35,6 +40,8 @@ public class LogAspectConfig {
     private TblLogRepository tblLogRepository;
     @PersistenceContext
     private EntityManager entityManager;
+
+    SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     /**
      * Pointcut 切入点
@@ -53,7 +60,7 @@ public class LogAspectConfig {
         LogAspectVo logAspectVo = before(pjp);
         if(logAspectVo != null){
             pjp.proceed();//执行方法
-            //方法结束，对比数据添加日志
+            this.after(logAspectVo);//方法结束，对比数据添加日志
         }
 
         return null;
@@ -65,7 +72,7 @@ public class LogAspectConfig {
      * @return
      * @throws IllegalAccessException
      */
-    public LogAspectVo before(JoinPoint joinPoint) {
+    public LogAspectVo before(JoinPoint joinPoint) throws IllegalAccessException {
         LogAspectVo logAspectVo = null;
 
         Object[] params = joinPoint.getArgs();
@@ -81,6 +88,7 @@ public class LogAspectConfig {
         Annotation[][] annotations = method.getParameterAnnotations();
         for (int i = 0; i < annotations.length; i++) {
             Object param = params[i];
+
             Annotation[] paramAnn = annotations[i];
             //参数为空，直接下一个参数
             if(param == null || paramAnn.length == 0){
@@ -96,8 +104,34 @@ public class LogAspectConfig {
                             params[i].getClass().getDeclaredFields(),
                             params[i], table.name());
 
+                    Field[] fields = params[i].getClass().getDeclaredFields();
+                    for (int jk = 0; jk < fields.length; jk++){
+                        try {
+                            fields[jk].setAccessible(true);
+                            System.out.println(fields[jk].get(params[i]));
+                        } catch (IllegalAccessException e) {
+                            e.printStackTrace();
+                        }
+                    }
                     break;
                 }
+            }
+
+            Integer id = null;
+            Field[] paramFields = param.getClass().getDeclaredFields();
+            for(int k = 0; k < paramFields.length; k++){
+                paramFields[k].setAccessible(true);
+                if(paramFields[k].getName().equals("id")){
+                    id = Integer.valueOf(paramFields[k].get(param) + "");
+                }
+            }
+            if(id != null){
+                String sqlStr = "select * from " + logAspectVo.getTablename() + " where id=" + id;
+
+                Query query = entityManager.createNativeQuery(sqlStr);
+                List list = query.getResultList();
+                Object[] cells = (Object[]) list.get(0);
+                logAspectVo.setObjects(cells);
             }
         }
 
@@ -109,8 +143,38 @@ public class LogAspectConfig {
         String id = null;
 
         Optional<Field> optionalField = Arrays.stream(fields).filter(s -> "id".equals(s.getName())).findFirst();
-        if(optionalField.isPresent()){
+        if(optionalField.isPresent() && logAspectVo.getObjects() != null){
             Field field = optionalField.get();
+            field.setAccessible(true);//可以访问私有属性
+            String sqlStr = "select * from " + logAspectVo.getTablename() + " where id=" + field.get(logAspectVo.getParamObject());
+
+            Query query = entityManager.createNativeQuery(sqlStr);
+            List list = query.getResultList();
+            Object[] cells = (Object[]) list.get(0);
+            for(int i = 0; i < logAspectVo.getObjects().length; i++){
+                fields[i].setAccessible(true);
+
+                if(!(cells[i] + "").equals(logAspectVo.getObjects()[i] + "")){
+
+                    TblLog tblLog = new TblLog();
+                    tblLog.setFlogdatetime(df.format(new Date()));
+                    tblLog.setFloguserid("");
+                    tblLog.setFlogusername("");
+                    tblLog.setFlogtypeid(logAspectVo.getStateLog());
+                    tblLog.setFlogtypename(logAspectVo.getStateLogName(tblLog.getFlogtypeid()));
+                    tblLog.setFtable(logAspectVo.getTablename());
+                    tblLog.setFrecordid(field.get(logAspectVo.getParamObject()) + "");
+                    tblLog.setFstate("1");
+                    if(tblLog.getFlogtypeid() == 1){
+                        tblLog.setFlogcontent("新增数据 id = " + field.get(logAspectVo.getParamObject()));
+                    }else if(tblLog.getFlogtypeid() == 2){
+                        tblLog.setFlogcontent(fields[i].getName() + "字段，由" + logAspectVo.getObjects()[i] +
+                                "改成" + cells[i]);
+                    }
+
+                    tblLogRepository.save(tblLog);
+                }
+            }
 
         }
     }
