@@ -13,8 +13,34 @@ public class DemoApplication {
         SpringApplication.run(DemoApplication.class, args);
     }
 
+    /*WebSocket部署在Spring容器中*/
     @Bean
     public ServerEndpointExporter serverEndpointExporter() {
         return new ServerEndpointExporter();
     }
+
+    /*@Bean
+    public JobDetail sampleJobDetail() {
+        return JobBuilder.newJob(TimeJob.class)
+                .withIdentity("timeJob")
+                .usingJobData("name", "Quartz")
+                .storeDurably()
+                .build();
+    }
+
+    @Bean
+    public Trigger sampleJobTrigger() {
+        // 如果需要使用 cronExpression 表达式，则使用 CronScheduleBuilder 进行创建
+        SimpleScheduleBuilder scheduleBuilder = SimpleScheduleBuilder
+                .simpleSchedule()
+                .withIntervalInSeconds(2)
+                .repeatForever();
+
+        return TriggerBuilder
+                .newTrigger()
+                .forJob(sampleJobDetail())
+                .withIdentity("timeTrigger")
+                .withSchedule(scheduleBuilder)
+                .build();
+    }*/
 }
