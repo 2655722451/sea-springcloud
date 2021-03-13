@@ -13,12 +13,13 @@ public class DemoApplication {
         SpringApplication.run(DemoApplication.class, args);
     }
 
-    /*WebSocket部署在Spring容器中*/
+    /* WebSocket部署在Spring容器中 */
     @Bean
     public ServerEndpointExporter serverEndpointExporter() {
         return new ServerEndpointExporter();
     }
 
+    /* Quartz 默认启动*/
     /*@Bean
     public JobDetail sampleJobDetail() {
         return JobBuilder.newJob(TimeJob.class)
